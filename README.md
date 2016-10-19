@@ -34,6 +34,25 @@ Pkg.clone("https://github.com/anowacki/MomentTensors.jl")
 You then need only do
 
 ```julia
+using MomentTensors
+```
+
+and if that works, you're ready to go.
+
+
+## How to use
+### MT type
+MomentTensors.jl represents moment tensors using the `MT` type.  This is an
+immutable type with one field (`m`) which is a length-6 `Float64` vector.
+
+Moment tensors can be specified by one of several ways; see the example help
+output in the 'Getting help' section below for the possible invocations.
+
+## Getting help
+Functions are documented, so at the REPL type `?` to get a `help?>` prompt,
+and type the name of the function:
+
+```julia
 help?> MT
 search: MT mtime SymTridiagonal Meta Method match Matrix mktemp methods matchall
 
@@ -70,24 +89,6 @@ search: MT mtime SymTridiagonal Meta Method match Matrix mktemp methods matchall
     1.   M[i,j] yields the elements of M.m as if they were a two-tensor
       
     2.   M[::Symbol] yields the elements by name; see getindex for details
-```
-
-and if that works, you're ready to go.
-
-
-## How to use
-### MT type
-MomentTensors.jl represents moment tensors using the `MT` type.  This is an
-immutable type with one field (`m`) which is a length-6 `Float64` vector.
-
-Moment tensors can be specified by one of several ways; see the example help
-output in the 'Getting help' section below for the possible invocations.
-
-## Getting help
-Functions are documented, so at the REPL type `?` to get a `help?>` prompt,
-and type the name of the function:
-
-```julia
 ```
 
 ## Dependencies
