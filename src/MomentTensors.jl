@@ -119,8 +119,11 @@ endof(m::MT) = endof(Array(m))
 
 +(m::MT, a::Real) = MT(m.m .+ a)
 +(a::Real, m::MT) = m + a
++(a::MT, b::MT) = MT(a.m .+ b.m)
 -(m::MT, a::Real) = MT(m.m .- a)
 -(a::Real, m::MT) = MT(a .- m.m)
+-(a::MT, b::MT) = MT(a.m .- b.m)
+-(m::MT) = MT(-m.m)
 *(m::MT, a::Real) = MT(m.m.*a)
 *(a::Real, m::MT) = m*a
 /(m::MT, a::Real) = MT(m.m./a)
