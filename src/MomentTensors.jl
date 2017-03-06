@@ -82,7 +82,9 @@ immutable MT
     m :: Vector{Float64}
     MT{T}(m::Vector{T}) = new(m)
     MT(rr, tt, pp, rt, rp, tp) = new([rr, tt, pp, rt, rp, tp])
-    MT{T}(m::Array{T,2}) = size(m) == (3,3) && new([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
+    MT{T}(m::Array{T,2}) = size(m) == (3,3) &&
+        new([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]]) ||
+        error("2-dimensional array must have dimensions `(3,3)` for a `MT`")
     MT(strike, dip, rake, M0) = new(_sdr2mt(strike, dip, rake, M0))
 end
 
