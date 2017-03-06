@@ -44,6 +44,7 @@ import Base: +, -, *, /, Array, endof, getindex, ndims, size
 
 export
     MT,
+    eps_non_dc,
     m0,
     mw,
     radiation_pattern,
@@ -306,5 +307,26 @@ function _symbol2index(s::Symbol)
     else error("'$s' is not a valid MT component name")
     end
 end
+
+"""
+    eps_non_dc(m::MT) -> ϵ
+
+Return the deviatoric non-double-couple component `ϵ` of the moment tensor `m`,
+defined by Giardini (1983) as
+
+ϵ = –λ₂/max(|λ₁|, |λ₃|),
+
+where the eigenvalues of the moment tensor are λ₁ ≥ λ₂ ≥ λ₃.
+
+## References
+- Giardini, D., 1983. Regional deviation of earthquake source mechanisms from the
+  'double couple' model. In: H. Kanamori and E. Boschi (Editors), Earthquakes:
+  Observation North-Holland, Amsterdam, Theory and Interpretation, pp. 345-353.
+"""
+function eps_non_dc(m::MT)
+    λ = sort(eigfact(m[:,:]).values)
+    -λ[2]/max(abs(λ[1]), abs(λ[3]))
+end
+
 
 end # module
