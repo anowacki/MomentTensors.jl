@@ -102,7 +102,7 @@ a symbol giving the name of the component.  This must be one of:
 getindex(m::MT, s::Symbol) = m.m[_symbol2index(s)]
 getindex(m::MT, i::Integer, j::Integer) = m.m[_ij2k[i,j]]
 getindex(m::MT, inds...) = getindex(Array(m), inds...)
-ndims(m::MT) = 3
+ndims(m::MT) = 2
 size(m::MT) = (3, 3)
 function size(m::MT, dim)
     if dim < 1
