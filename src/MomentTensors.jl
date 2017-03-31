@@ -44,9 +44,12 @@ import Base: +, -, *, /, Array, endof, getindex, ndims, size
 
 export
     MT,
+    amplitude_v_azimuth,
+    cmtsolution,
     eps_non_dc,
     m0,
     mw,
+    ndk,
     radiation_pattern,
     rotate
 
@@ -132,6 +135,23 @@ endof(m::MT) = endof(Array(m))
 
 # Routines using or manipulating MTs
 """
+    amplitude_v_azimuth(m::MT, inclination, azimuth_range=0:359) -> P, SV, SH, j
+
+Return the P, SV and SH wave amplitudes, `P`, `SV`, `SH` respectively, and source
+polarisation, `j`, across the range of azimuth `azimuth_range`.
+"""
+function amplitude_v_azimuth(m::MT, inclination, azimuth_range=0:359)
+    p = Array{Float64}(length(azimuth_range))
+    sv = similar(p)
+    sh = similar(p)
+    j = similar(p)
+    for (i, az) in enumerate(azimuth_range)
+        p[i], sv[i], sh[i], j[i] = radiation_pattern(m, az, inclination)
+    end
+    p, sv, sh, j
+end
+
+"""
     auxplane(strike, dip, rake) -> strike, dip, rake
 
 Return the strike, dip and rake of the auxiliary plane, given the `strike`,
@@ -166,6 +186,42 @@ function auxplane(strike, dip, rake)
     strike2 = mod(strike2, 360.) # In range 0 to 360
     strike2, dip2, rake2
 end
+
+"""
+    cmtsolution(str::String) -> m
+
+Return the moment tensor `m` described by the contents of `str`, which are in
+the CMTSOLUTION format used by SPECFEM3D(_GLOBE).
+"""
+function cmtsolution(str::String)
+    lines = _getlines(str)
+    length(lines) == 13 || error("The supplied string does not have 13 lines.  " *
+        "Got:\n" * str)
+    # Allow for Fortran double precision scientific notation (1d-3)
+    vals = [parse(Float64, replace(split(l)[2], r"[dD]", "e")) for l in lines[8:13]]
+    MT(vals.*1e-7) # Convert from dyne.cm to N.m
+end
+
+"""
+    ndk(str::String) -> m, err
+
+Return the moment tensor `m` and its uncertainty `err` given by the contents of
+`str`, which are in the ndk format used by the Global CMT project.
+"""
+function ndk(str::String)
+    lines = _getlines(str)
+    length(lines) == 5 || error("The supplied string does not have 5 lines.  " *
+        "Got:\n" * str)
+    tokens = [parse(Float64, l) for l in split(lines[4])]
+    length(tokens) == 13 || error("Line 4 of input does not have 13 fields.  " *
+        "Got:\n" * lines[4])
+    expo = tokens[1] - 7 # Convert from dyne.cm to N.m
+    m = MT(tokens[2:2:end].*10.0^expo)
+    err = MT(tokens[3:2:end].*10.0^expo)
+    m, err
+end
+
+_getlines(s::String) = split(chomp(s), '\n')
 
 """
     radiation_pattern(m::MT, azimuth, inclination) -> P, SV, SH, j
