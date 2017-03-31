@@ -6,7 +6,7 @@ tensors](https://earthquake.usgs.gov/learn/glossary/?term=moment%20tensor).
 
 It is currently very limited, and useful for two main things:
 
-1. Calcuating the radiation pattern for a moment tensor; and
+1. Calculating the radiation pattern for a moment tensor; and
 2. Rotating moment tensors.
 
 I wrote this module because these are by far the most common things I need to do
