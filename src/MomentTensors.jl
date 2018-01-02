@@ -86,10 +86,14 @@ struct MT
     m ::Vector{Float64}
     MT{T}(m::Vector{T}) = new(m)
     MT(rr, tt, pp, rt, rp, tp) = new([rr, tt, pp, rt, rp, tp])
-    MT{T}(m::Array{T,2}) = size(m) == (3,3) &&
-        new([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]]) ||
-        error("2-dimensional array must have dimensions `(3,3)` for a `MT`")
     MT(strike, dip, rake, M0) = new(_sdr2mt(strike, dip, rake, M0))
+    function MT{T}(m::Array{T,2})
+        size(m) == (3,3) ||
+            error("2-dimensional array must have dimensions `(3,3)` for a `MT`")
+        (m[1,2] ≈ m[2,1] && m[1,3] ≈ m[3,1] && m[2,3] ≈ m[3,2]) ||
+            warn("Supplied tensor is not symmetric; using upper elements")
+        new([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
+    end
 end
 
 # Overloaded base operators and constructors
