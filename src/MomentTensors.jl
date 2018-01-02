@@ -82,8 +82,8 @@ accessing the field `M.m`):
 1. M[i,j] yields the elements of `M.m` as if they were a two-tensor
 2. M[::Symbol] yields the elements by name; see `getindex` for details
 """
-immutable MT
-    m :: Vector{Float64}
+struct MT
+    m ::Vector{Float64}
     MT{T}(m::Vector{T}) = new(m)
     MT(rr, tt, pp, rt, rp, tp) = new([rr, tt, pp, rt, rp, tp])
     MT{T}(m::Array{T,2}) = size(m) == (3,3) &&
@@ -234,10 +234,10 @@ downwards towards the radial direction.  Angles in degrees.
 
     ^ V (SV)
     |
-    | j   /       View looking along ray
-    |-   /
-    | \ /
-    |  /
+    |     /       View looking along ray
+    |_ j /
+    | ` /
+    | |/
     | /
     |/
     x----------> H (SH)
@@ -278,21 +278,21 @@ function radiation_pattern(m::MT, azimuth, inclination)
     i = deg2rad(inclination)
 
     # Some shortcuts
- 	sini = sin(i)
- 	cosi = cos(i)
- 	sinphi = sin(a)
- 	cosphi = cos(a)
- 	sintwophi = sin(2*a)
- 	costwophi = cos(2*a)
- 	# Calculate radiation pattern for P, SV and SH
- 	P = (sini^2)*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
- 		2*sini*cosi*(Mxz*cosphi + Myz*sinphi) + Mzz
- 	SV = sini*cosi*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
- 		 cos(2*i)*(Mxz*cosphi + Myz*sinphi)
- 	SH = sini*((Myy - Mxx)*sinphi*cosphi + Mxy*costwophi) +
- 		 cosi*(Myz*cosphi - Mxz*sinphi)
- 	# Source polarisation in ray frame, measured from upwards towards the right
- 	j = rad2deg(atan2(SV,SH))
+    sini = sin(i)
+    cosi = cos(i)
+    sinphi = sin(a)
+    cosphi = cos(a)
+    sintwophi = sin(2*a)
+    costwophi = cos(2*a)
+    # Calculate radiation pattern for P, SV and SH
+    P = (sini^2)*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
+        2*sini*cosi*(Mxz*cosphi + Myz*sinphi) + Mzz
+    SV = sini*cosi*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
+         cos(2*i)*(Mxz*cosphi + Myz*sinphi)
+    SH = sini*((Myy - Mxx)*sinphi*cosphi + Mxy*costwophi) +
+         cosi*(Myz*cosphi - Mxz*sinphi)
+    # Source polarisation in ray frame, measured from upwards towards the right
+    j = rad2deg(atan2(SV,SH))
     P, SV, SH, j
 end
 
