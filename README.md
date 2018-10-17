@@ -20,16 +20,18 @@ interactive help for details), though nothing is stopping you using another
 convention with it as long as you remember which indices correspond to which
 directions.
 
-No input/output is performed beyond basic Julia IO.  Adding `CMTSOLUTION` format
-is on the cards, however.
+No input/output is performed beyond basic Julia IO.
 
 ## How to install
 Although not registered as an official package, MomentTensors.jl can be added
 to your Julia install like so:
 
 ```julia
-Pkg.clone("https://github.com/anowacki/MomentTensors.jl")
+julia> import Pkg; Pkg.add("https://github.com/anowacki/MomentTensors.jl")
 ```
+
+(On Julia versions less than v0.7, do:
+`Pkg.clone("https://github.com/anowacki/MomentTensors.jl"); Pkg.checkout("MomentTensors", "julia0.6")`.)
 
 You then need only do
 
@@ -43,10 +45,27 @@ and if that works, you're ready to go.
 ## How to use
 ### MT type
 MomentTensors.jl represents moment tensors using the `MT` type.  This is an
-immutable type with one field (`m`) which is a length-6 `Float64` vector.
+immutable type with one field (`m`) which is a length-6 `StaticArrays.SVector`.
 
 Moment tensors can be specified by one of several ways; see the example help
 output in the 'Getting help' section below for the possible invocations.
+
+## Exported functions
+
+- `MT`: Construct a new moment tensor.
+- `amplitude_v_azimuth`: Compute the P, SV and SH amplitudes, and polarisation angle,
+  for a particular takeoff angle at a range of azimuths.
+- `cmtsolution`: Construct a new moment tensor from a string in the SPECFEM3D 'CMTSOLUTION'
+   format
+- `eps_non_dc`: Calculate the non-double-couple component of an MT.
+- `m0`: Return the scalar moment, given a moment magnitude.
+- `mw`: Return the moment magnitude, given a scalar moment.
+- `ndk`: Construct a new moment tensor from a string in the 'NDK' format used by
+  the Global CMT project.
+- `radiation_pattern`: Compute the P, SV and SH amplitude, and S polarisation angle,
+  along a specific takeoff angle and azimuth.
+- `rotate`: Rotate an MT.
+
 
 ## Getting help
 Functions are documented, so at the REPL type `?` to get a `help?>` prompt,
@@ -90,10 +109,3 @@ search: MT mtime SymTridiagonal Meta Method match Matrix mktemp methods matchall
       
     2.   M[::Symbol] yields the elements by name; see getindex for details
 ```
-
-## Dependencies
-- [Rotations.jl](https://github.com/FugroRoames/Rotations.jl)
-
-If you add MomentTensors.jl with the `Pkg.add()` command, then the required
-package will be installed automatically if it is not already in your
-installation.

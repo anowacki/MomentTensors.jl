@@ -38,9 +38,8 @@ All angles are in degrees, always.
 """
 module MomentTensors
 
-using Rotations
-
-import Base: +, -, *, /, Array, endof, getindex, ndims, size
+using LinearAlgebra
+using Rotations, StaticArrays
 
 export
     MT,
@@ -54,9 +53,9 @@ export
     rotate
 
 "Array to convert from the 6-vector into a 3x3 tensor.  `m.m[_ij2k[i,j]] === m.m[k]`"
-const _ij2k = [1 4 5
-               4 2 6
-               5 6 3]
+const _ij2k = @SMatrix [1 4 5
+                        4 2 6
+                        5 6 3]
 
 """
     MT(rr, θθ, ϕϕ, rθ, rϕ, θϕ) -> ::MT
@@ -82,22 +81,24 @@ accessing the field `M.m`):
 1. M[i,j] yields the elements of `M.m` as if they were a two-tensor
 2. M[::Symbol] yields the elements by name; see `getindex` for details
 """
-struct MT
-    m ::Vector{Float64}
-    MT{T}(m::Vector{T}) = new(m)
-    MT(rr, tt, pp, rt, rp, tp) = new([rr, tt, pp, rt, rp, tp])
-    MT(strike, dip, rake, M0) = new(_sdr2mt(strike, dip, rake, M0))
-    function MT{T}(m::Array{T,2})
-        size(m) == (3,3) ||
-            error("2-dimensional array must have dimensions `(3,3)` for a `MT`")
-        (m[1,2] ≈ m[2,1] && m[1,3] ≈ m[3,1] && m[2,3] ≈ m[3,2]) ||
-            warn("Supplied tensor is not symmetric; using upper elements")
-        new([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
-    end
+struct MT{T<:Number}
+    m::SVector{6,T}
+end
+
+MT(args...) = MT{Float64}(args...)
+MT(m::Vector{T}) where T = MT{T}(m)
+MT{T}(rr, tt, pp, rt, rp, tp) where T = MT{T}(SVector{6,Float64}(rr, tt, pp, rt, rp, tp))
+MT{T}(strike, dip, rake, M0) where T = MT{T}(_sdr2mt(strike, dip, rake, M0))
+function MT(m::AbstractArray{T,2}) where T
+    size(m) == (3,3) ||
+        throw(ArgumentError("2-dimensional array must have dimensions `(3,3)` for a `MT`"))
+    (m[1,2] ≈ m[2,1] && m[1,3] ≈ m[3,1] && m[2,3] ≈ m[3,2]) ||
+        @warn("Supplied tensor is not symmetric; using upper elements")
+    MT([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
 end
 
 # Overloaded base operators and constructors
-Array(m::MT) = [m[i,j] for i in 1:3, j in 1:3]
+Base.Array(m::MT) = Array(m[:,:])
 
 """
     getindex(m::MT, i, j) -> val
@@ -109,33 +110,23 @@ Two forms are permitted.  Either two indices may be supplied, `i` and `j`, or
 a symbol giving the name of the component.  This must be one of:
     :rr, :tt, :pp, :rt, :tr, :rp, :pr, :tp, :pt
 """
-getindex(m::MT, s::Symbol) = m.m[_symbol2index(s)]
-getindex(m::MT, i::Integer, j::Integer) = m.m[_ij2k[i,j]]
-getindex(m::MT, inds...) = getindex(Array(m), inds...)
-ndims(m::MT) = 2
-size(m::MT) = (3, 3)
-function size(m::MT, dim)
-    if dim < 1
-        error("arraysize: dimension out of range")
-    elseif dim < 3
-        3
-    else
-        1
-    end
-end
-endof(m::MT) = endof(Array(m))
+Base.getindex(m::MT, s::Symbol) = m.m[_symbol2index(s)]
+Base.getindex(m::MT, i) = m.m[i]
+Base.getindex(m::MT, i, j) = m.m[_ij2k[i,j]]
+Base.getindex(m::MT, i, j, inds...) = m[inds[i],inds[j]][inds...]
+Base.size(m::MT) = (3, 3)
 
-+(m::MT, a::Real) = MT(m.m .+ a)
-+(a::Real, m::MT) = m + a
-+(a::MT, b::MT) = MT(a.m .+ b.m)
--(m::MT, a::Real) = MT(m.m .- a)
--(a::Real, m::MT) = MT(a .- m.m)
--(a::MT, b::MT) = MT(a.m .- b.m)
--(m::MT) = MT(-m.m)
-*(m::MT, a::Real) = MT(m.m.*a)
-*(a::Real, m::MT) = m*a
-/(m::MT, a::Real) = MT(m.m./a)
-/(a::Real, m::MT) = MT(a./m.m)
+Base.:+(m::MT, a::Real) = MT(m.m .+ a)
+Base.:+(a::Real, m::MT) = MT(a .+ m.m)
+Base.:+(a::MT, b::MT) = MT(a.m .+ b.m)
+Base.:-(m::MT, a::Real) = MT(m.m .- a)
+Base.:-(a::Real, m::MT) = MT(a .- m.m)
+Base.:-(a::MT, b::MT) = MT(a.m .- b.m)
+Base.:-(m::MT) = MT(-m.m)
+Base.:*(m::MT, a::Real) = MT(m.m.*a)
+Base.:*(a::Real, m::MT) = MT(a.*m.m)
+Base.:/(m::MT, a::Real) = MT(m.m./a)
+Base.:/(a::Real, m::MT) = MT(a./m.m)
 
 # Routines using or manipulating MTs
 """
@@ -145,7 +136,7 @@ Return the P, SV and SH wave amplitudes, `P`, `SV`, `SH` respectively, and sourc
 polarisation, `j`, across the range of azimuth `azimuth_range`.
 """
 function amplitude_v_azimuth(m::MT, inclination, azimuth_range=0:359)
-    p = Array{Float64}(length(azimuth_range))
+    p = Array{Float64}(undef, length(azimuth_range))
     sv = similar(p)
     sh = similar(p)
     j = similar(p)
@@ -163,31 +154,31 @@ Return the strike, dip and rake of the auxiliary plane, given the `strike`,
 """
 function auxplane(strike, dip, rake)
     # Formula taken from Shearer, Introduction to Seismology
-    s1 = deg2rad(strike1)
-    d1 = deg2rad(dip1)
-    r1 = deg2rad(rake1)
+    s1 = deg2rad(strike)
+    d1 = deg2rad(dip)
+    r1 = deg2rad(rake)
 
     d2 = acos(sin(r1)*sin(d1))
 
     sr2 = cos(d1)/sin(d2)
     cr2 = -sin(d1)*cos(r1)/sin(d2)
-    r2 = atan2(sr2,cr2)
+    r2 = atan(sr2, cr2)
 
     s12 = cos(r1)/sin(d2)
     c12 = -1/(tan(d1)*tan(d2))
-    s2 = s1 - atan2(s12, c12)
+    s2 = s1 - atan(s12, c12)
 
     strike2 = rad2deg(s2)
     dip2 = rad2deg(d2)
     rake2 = rad2deg(r2)
 
-    if dip2 > 90.
-       strike2 = strike2 + 180.
-       dip2 = 180. - dip2
-       rake2 = 360. - rake2
+    if dip2 > 90.0
+       strike2 = strike2 + 180.0
+       dip2 = 180.0 - dip2
+       rake2 = 360.0 - rake2
     end
-    rake2 = mod(rake2 + 180., 360.) - 180. # In range -180 to 180
-    strike2 = mod(strike2, 360.) # In range 0 to 360
+    rake2 = mod(rake2 + 180.0, 360.0) - 180.0 # In range -180 to 180
+    strike2 = mod(strike2, 360.0) # In range 0 to 360
     strike2, dip2, rake2
 end
 
@@ -199,10 +190,10 @@ the CMTSOLUTION format used by SPECFEM3D(_GLOBE).
 """
 function cmtsolution(str::String)
     lines = _getlines(str)
-    length(lines) == 13 || error("The supplied string does not have 13 lines.  " *
+    length(lines) == 13 || @error("The supplied string does not have 13 lines.  " *
         "Got:\n" * str)
     # Allow for Fortran double precision scientific notation (1d-3)
-    vals = [parse(Float64, replace(split(l)[2], r"[dD]", "e")) for l in lines[8:13]]
+    vals = [parse(Float64, replace(split(l)[2], r"[dD]"=>"e")) for l in lines[8:13]]
     MT(vals.*1e-7) # Convert from dyne.cm to N.m
 end
 
@@ -214,10 +205,10 @@ Return the moment tensor `m` and its uncertainty `err` given by the contents of
 """
 function ndk(str::String)
     lines = _getlines(str)
-    length(lines) == 5 || error("The supplied string does not have 5 lines.  " *
+    length(lines) == 5 || @error("The supplied string does not have 5 lines.  " *
         "Got:\n" * str)
     tokens = [parse(Float64, l) for l in split(lines[4])]
-    length(tokens) == 13 || error("Line 4 of input does not have 13 fields.  " *
+    length(tokens) == 13 || @error("Line 4 of input does not have 13 fields.  " *
         "Got:\n" * lines[4])
     expo = tokens[1] - 7 # Convert from dyne.cm to N.m
     m = MT(tokens[2:2:end].*10.0^expo)
@@ -286,17 +277,17 @@ function radiation_pattern(m::MT, azimuth, inclination)
     cosi = cos(i)
     sinphi = sin(a)
     cosphi = cos(a)
-    sintwophi = sin(2*a)
-    costwophi = cos(2*a)
+    sintwophi = sin(2a)
+    costwophi = cos(2a)
     # Calculate radiation pattern for P, SV and SH
     P = (sini^2)*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
         2*sini*cosi*(Mxz*cosphi + Myz*sinphi) + Mzz
     SV = sini*cosi*(Mxx*cosphi^2 + Mxy*sintwophi + Myy*sinphi^2 - Mzz) +
-         cos(2*i)*(Mxz*cosphi + Myz*sinphi)
+         cos(2i)*(Mxz*cosphi + Myz*sinphi)
     SH = sini*((Myy - Mxx)*sinphi*cosphi + Mxy*costwophi) +
          cosi*(Myz*cosphi - Mxz*sinphi)
     # Source polarisation in ray frame, measured from upwards towards the right
-    j = rad2deg(atan2(SV,SH))
+    j = rad2deg(atan(SV, SH))
     P, SV, SH, j
 end
 
@@ -310,7 +301,7 @@ towards the origin.
 function rotate(m::MT, r, t, p)
     R = RotZ(deg2rad(p)) * RotY(deg2rad(t)) * RotX(deg2rad(r))
     m′ = R'*Array(m)*R
-    MT(Array(m′))
+    MT(m′)
 end
 
 "    mw(m0) -> mw\n\nConvert a scalar moment (Nm) to a moment magnitude"
@@ -336,7 +327,7 @@ Convention:
 All angles are in degrees.
 """
 function _sdr2mt(strike, dip, rake, M0)
-    0. .<= dip .<= 90. || error("`dip` must be between 0° and 90°")
+    0.0 .<= dip .<= 90.0 || throw(ArgumentError("`dip` must be between 0° and 90°"))
     s, d, r = deg2rad(strike), deg2rad(dip), deg2rad(rake)
     tt = -M0*(sin(d)*cos(r)*sin(2s) + sin(2d)*sin(r)*sin(s)^2)
     tp = -M0*(sin(d)*cos(r)*cos(2s) + sin(2d)*sin(r)*sin(2s)/2)
@@ -344,7 +335,7 @@ function _sdr2mt(strike, dip, rake, M0)
     pp =  M0*(sin(d)*cos(r)*sin(2s) - sin(2d)*sin(r)*cos(s)^2)
     rp =  M0*(cos(d)*cos(r)*sin(s)  - cos(2d)*sin(r)*cos(s))
     rr =  M0*sin(2d)*sin(r)
-    [rr, tt, pp, rt, rp, tp]
+    @SVector [rr, tt, pp, rt, rp, tp]
 end
 
 """
@@ -357,14 +348,13 @@ The following are permitted; case and order do not matter:
     :rr, :tt, :θθ, :pp, :ϕϕ, :rt, :rθ, :rp, :rϕ, :tp, :θϕ
 """
 function _symbol2index(s::Symbol)
-    s = Symbol(lowercase(string(s)))
     if     s == :rr                  1
     elseif s in (:tt, :θθ)           2
     elseif s in (:pp, :ϕϕ)           3
     elseif s in (:rt, :tr, :rθ, :θr) 4
     elseif s in (:rp, :pr, :rϕ, :ϕr) 5
     elseif s in (:tp, :pt, :θϕ, :ϕθ) 6
-    else error("'$s' is not a valid MT component name")
+    else throw(ArgumentError("'$s' is not a valid MT component name"))
     end
 end
 
@@ -384,9 +374,15 @@ where the eigenvalues of the moment tensor are λ₁ ≥ λ₂ ≥ λ₃.
   Observation North-Holland, Amsterdam, Theory and Interpretation, pp. 345-353.
 """
 function eps_non_dc(m::MT)
-    λ = sort(eigfact(m[:,:]).values)
+    λ = sort(eigen(Symmetric(m[:,:])).values)
     -λ[2]/max(abs(λ[1]), abs(λ[3]))
 end
 
+# Printing to the REPL looks like a 3×3 matrix
+function Base.show(io::IO, mime::MIME"text/plain", m::MT{T}) where T
+    println(io, "MomentTensors.MT{$T}:")
+    io = IOContext(io, :compact=>true)
+    Base.print_array(io, Array(m))
+end
 
 end # module
