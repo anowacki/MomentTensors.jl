@@ -1,7 +1,7 @@
 name = "MomentTensors"
 uuid = "7bb32750-d21c-11e8-1ebc-09158bc70490"
 authors = ["Andy Nowacki <a.nowacki@leeds.ac.uk>"]
-version = "0.1.0"
+version = "0.2.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
