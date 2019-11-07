@@ -319,10 +319,19 @@ function rotate(m::MT, r, t, p)
     MT(m′)
 end
 
-"    mw(m0) -> mw\n\nConvert a scalar moment (Nm) to a moment magnitude"
-mw(M0) = (2/3)*(log10(M0) - 16.1)
-"    m0(mw) -> m0\n\nConvert a moment magnitude to a scalar moment (Nm)"
-m0(Mw) = 10^((3/2)*Mw + 16.1)
+"""
+    mw(m0) -> mw
+
+Convert a scalar moment (Nm) to a moment magnitude
+"""
+mw(M0) = 2/3*log10(M0*1e7) - 10.7
+
+"""
+    m0(mw) -> m0
+
+Convert a moment magnitude to a scalar moment (Nm)
+"""
+m0(Mw) = 10^(3/2*(Mw + 10.7))/1e7
 
 """
     _sdr2mt(strike, dip, rake, m0) -> ::SVector{6}
