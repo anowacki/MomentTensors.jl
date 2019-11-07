@@ -351,7 +351,7 @@ Convention:
 All angles are in degrees.
 """
 function _sdr2mt(strike, dip, rake, M0)
-    0.0 .<= dip .<= 90.0 || throw(ArgumentError("`dip` must be between 0° and 90°"))
+    0 <= dip <= 90 || throw(ArgumentError("`dip` must be between 0° and 90°"))
     s, d, r = deg2rad(strike), deg2rad(dip), deg2rad(rake)
     tt = -M0*(sin(d)*cos(r)*sin(2s) + sin(2d)*sin(r)*sin(s)^2)
     tp = -M0*(sin(d)*cos(r)*cos(2s) + sin(2d)*sin(r)*sin(2s)/2)
