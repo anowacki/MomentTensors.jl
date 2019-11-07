@@ -126,6 +126,7 @@ Base.getindex(m::MT, i) = m.m[i]
 Base.getindex(m::MT, i, j) = m.m[_ij2k[i,j]]
 Base.getindex(m::MT, i, j, inds...) = m[inds[i],inds[j]][inds...]
 Base.size(m::MT) = (3, 3)
+Base.isapprox(m1::MT, m2::MT; kwargs...) = isapprox(m1.m, m2.m; kwargs...)
 
 Base.:+(m::MT, a::Real) = MT(m.m .+ a)
 Base.:+(a::Real, m::MT) = MT(a .+ m.m)
