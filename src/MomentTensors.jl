@@ -200,10 +200,10 @@ end
 Return the moment tensor `m` described by the contents of `str`, which are in
 the CMTSOLUTION format used by SPECFEM3D(_GLOBE).
 """
-function cmtsolution(str::String)
+function cmtsolution(str::AbstractString)
     lines = _getlines(str)
-    length(lines) == 13 || @error("The supplied string does not have 13 lines.  " *
-        "Got:\n" * str)
+    length(lines) == 13 || throw(ArgumentError("The supplied string " *
+        "does not have 13 lines.  Got:\n" * str))
     # Allow for Fortran double precision scientific notation (1d-3)
     vals = [parse(Float64, replace(split(l)[2], r"[dD]"=>"e")) for l in lines[8:13]]
     MT(vals.*1e-7) # Convert from dyne.cm to N.m
@@ -215,16 +215,19 @@ end
 Return the moment tensor `m` and its uncertainty `err` given by the contents of
 `str`, which are in the ndk format used by the Global CMT project.
 """
-function ndk(str::String)
+function ndk(str::AbstractString)
     lines = _getlines(str)
-    length(lines) == 5 || @error("The supplied string does not have 5 lines.  " *
-        "Got:\n" * str)
-    tokens = [parse(Float64, l) for l in split(lines[4])]
-    length(tokens) == 13 || @error("Line 4 of input does not have 13 fields.  " *
-        "Got:\n" * lines[4])
-    expo = tokens[1] - 7 # Convert from dyne.cm to N.m
-    m = MT(tokens[2:2:end].*10.0^expo)
-    err = MT(tokens[3:2:end].*10.0^expo)
+    length(lines) == 5 || throw(ArgumentError("The supplied string does " *
+        "not have 5 lines.  Got:\n" * str))
+    tokens = split(lines[4])
+    length(tokens) == 13 || throw(ArgumentError("Line 4 of input does not " *
+        "have 13 fields.  Got:\n" * lines[4]))
+    expo = tryparse(Int, tokens[1])
+    expo === nothing && throw(ArgumentError("First token of line 4 " *
+        "of input is not an integer.  Got: '$(tokens[1])'"))
+    expo = expo - 7 # Convert from dyne.cm to N.m
+    m = MT(parse.(Float64, tokens[2:2:end]).*10.0^expo)
+    err = MT(parse.(Float64, tokens[3:2:end]).*10.0^expo)
     m, err
 end
 
