@@ -97,8 +97,17 @@ function MT(m::AbstractArray{T,2}) where T
     MT([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
 end
 
+"""
+    _matrix(m::MT)
+
+Return a 3×3 `SMatrix` for the moment tensor `m`.
+"""
+_matrix(m::MT) = SMatrix{3,3}(m[1], m[4], m[5],
+                              m[4], m[2], m[6],
+                              m[5], m[6], m[3])
+
 # Overloaded base operators and constructors
-Base.Array(m::MT) = Array(m[:,:])
+Base.Array(m::MT) = Array(_matrix(m))
 
 """
     getindex(m::MT, i, j) -> val
@@ -374,7 +383,7 @@ where the eigenvalues of the moment tensor are λ₁ ≥ λ₂ ≥ λ₃.
   Observation North-Holland, Amsterdam, Theory and Interpretation, pp. 345-353.
 """
 function eps_non_dc(m::MT)
-    λ = sort(eigen(Symmetric(m[:,:])).values)
+    λ = sort(eigen(Symmetric(_matrix(m))).values)
     -λ[2]/max(abs(λ[1]), abs(λ[3]))
 end
 
