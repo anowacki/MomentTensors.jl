@@ -59,8 +59,8 @@ const _ij2k = @SMatrix [1 4 5
 
 """
     MT(rr, θθ, ϕϕ, rθ, rϕ, θϕ) -> ::MT
-    MT(M::Vector(6)) -> ::MT
-    MT(M::Array(3,3)) -> ::MT
+    MT(M::AbstractVector(6)) -> ::MT
+    MT(M::AbstractArray(3,3), warn=true) -> ::MT
     MT(strike, dip, rake, M0) -> ::MT
 
 Construct a new `MT` (moment tensor) in the native frame used by `MomentTensors`:
@@ -71,30 +71,32 @@ Construct a new `MT` (moment tensor) in the native frame used by `MomentTensors`
 Several forms exist to construct a moment tensor:
 * Supply individual components as a list of arguments
 * Supply a 6-vector
-* Give a 3×3 matrix
 * Specify a strike, dip and rake in degrees, and scalar moment (N.m)
+* Give a 3×3 matrix
 
-The `MT` type holds one field, `m`, as a length-6 vector.
+For the last case, the upper half of the matrix only is used.  By default
+symmetry is checked and a warning is issued if the input is not approximately
+symmetric.  This can be turned off when `warn` is `false.
 
-One may access the values of a moment tensor `M` in two ways (beyond directly
-accessing the field `M.m`):
+One may access the values of a moment tensor `M` in two ways:
 1. M[i,j] yields the elements of `M.m` as if they were a two-tensor
 2. M[::Symbol] yields the elements by name; see `getindex` for details
 """
-struct MT{T<:Number}
+struct MT{T<:AbstractFloat}
     m::SVector{6,T}
+    MT{T}(m) where T = new{T}(m)
 end
 
-MT(args...) = MT{Float64}(args...)
-MT(m::Vector{T}) where T = MT{T}(m)
-MT{T}(rr, tt, pp, rt, rp, tp) where T = MT{T}(SVector{6,Float64}(rr, tt, pp, rt, rp, tp))
+MT(args...) = MT{float(promote_type(eltype.(args)...))}(args...)
+MT(m::Union{AbstractVector{T}, AbstractArray{T,2}}) where T = MT{float(T)}(m)
+MT{T}(rr, tt, pp, rt, rp, tp) where T = MT{T}(SVector{6,T}(rr, tt, pp, rt, rp, tp))
 MT{T}(strike, dip, rake, M0) where T = MT{T}(_sdr2mt(strike, dip, rake, M0))
-function MT(m::AbstractArray{T,2}) where T
+function MT{T}(m::AbstractArray{U,2} where U, warn=true) where T
     size(m) == (3,3) ||
         throw(ArgumentError("2-dimensional array must have dimensions `(3,3)` for a `MT`"))
-    (m[1,2] ≈ m[2,1] && m[1,3] ≈ m[3,1] && m[2,3] ≈ m[3,2]) ||
+    warn && !(m[1,2] ≈ m[2,1] && m[1,3] ≈ m[3,1] && m[2,3] ≈ m[3,2]) &&
         @warn("Supplied tensor is not symmetric; using upper elements")
-    MT([m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]])
+    MT{T}(SVector{6,T}(m[1,1], m[2,2], m[3,3], m[1,2], m[1,3], m[2,3]))
 end
 
 """
