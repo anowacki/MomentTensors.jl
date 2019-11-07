@@ -45,6 +45,7 @@ export
     MT,
     amplitude_v_azimuth,
     cmtsolution,
+    decompose,
     eps_non_dc,
     m0,
     mw,
@@ -407,6 +408,42 @@ function Base.show(io::IO, mime::MIME"text/plain", m::MT{T}) where T
     println(io, "MomentTensors.MT{$T}:")
     io = IOContext(io, :compact=>true)
     Base.print_array(io, Array(m))
+end
+
+"""
+    decompose(m::MT) -> m_iso, m_dev, m_dc, m_clvd
+
+Decompose the arbitrary moment tensor `m` into its isotropic, `m_iso`,
+and deviatoric parts, `m_dev`, plus the CLVD, `m_clvd`, and double-couple,
+`m_dc`, components
+"""
+function decompose(m::MT{T}) where T
+    tr = m[1] + m[2] + m[3]
+    m_iso = MT(tr/3, tr/3, tr/3, 0, 0, 0) # Isotropic MT
+    m0_iso = abs(tr)/3 # Moment of isotropic part
+    m_dev = m - m_iso # Deviatoric MT
+    evals, evecs = LinearAlgebra.eigen(Symmetric(_matrix(m_dev)))
+    # Sort eigenvectors (basis vectors) by absolute eigenvalues
+    i = sortperm(evals, by=abs)
+    e1 = SVector{3}(evecs[:,i[1]])
+    e2 = SVector{3}(evecs[:,i[2]])
+    e3 = SVector{3}(evecs[:,i[3]])
+    # λ₁ is smallest absolute eigenvalue, corresponding to e1
+    λ₁, λ₂, λ₃ = evals[i]
+    # Largest absolute eigenvector gives moment of deviatoric part
+    m0_dev = abs(λ₃)
+    # Proportion of 
+    F = m0_dev < eps(T) ? T(0.5) : -λ₁/λ₃
+    m_dc = MT(λ₃*(1 - 2F)*(e3.*e3' - e2.*e2'))
+    m_clvd = m_dev - m_dc
+    m0 = m0_iso + m0_dev
+    iso_prop = m0_iso/m0
+    dev_prop = m0_dev/m0
+    dc_prop = (1 - 2F)*(1 - iso_prop)
+    clvd_prop = 1 - iso_prop - dc_prop
+    return (iso=m_iso, dev=m_dev, dc=m_dc, clvd=m_clvd, iso_m0=m0_iso, dev_m0=m0_dev,
+        prop_iso=iso_prop, prop_dev=dev_prop, prop_dc=dc_prop, prop_clvd=clvd_prop,
+        m0=m0)
 end
 
 end # module
