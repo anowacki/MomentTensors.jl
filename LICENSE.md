@@ -1,5 +1,4 @@
-The Julia MomentTensors module is licensed under under an MIT-style
-licence:
+The Julia MomentTensors module is licensed under the MIT licence:
 
 Copyright (c) 2016– Andy Nowacki (a.nowacki@leeds.ac.uk)
 
