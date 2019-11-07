@@ -325,7 +325,7 @@ mw(M0) = (2/3)*(log10(M0) - 16.1)
 m0(Mw) = 10^((3/2)*Mw + 16.1)
 
 """
-    _sdr2mt(strike, dip, rake, m0) -> ::MT
+    _sdr2mt(strike, dip, rake, m0) -> ::SVector{6}
 
 Return a moment tensor defined by the `strike`, `dip` and `rake` of the fault
 plane, and a scalar moment `m0`.  Use `m0(mw)` if you want to specify the
