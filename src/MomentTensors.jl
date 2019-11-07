@@ -368,7 +368,7 @@ end
 Return the index in the range `1 <= k <= 6` with which to access the `m` field
 of an `MT` type.
 
-The following are permitted; case and order do not matter:
+The following are permitted; order does not matter:
     :rr, :tt, :θθ, :pp, :ϕϕ, :rt, :rθ, :rp, :rϕ, :tp, :θϕ
 """
 function _symbol2index(s::Symbol)
