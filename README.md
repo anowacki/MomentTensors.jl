@@ -1,5 +1,9 @@
 # MomentTensors.jl
 
+[![Build Status](https://travis-ci.org/anowacki/MomentTensors.jl.svg?branch=master)](https://travis-ci.org/anowacki/MomentTensors.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/bovv9topw8r60l0k?svg=true)](https://ci.appveyor.com/project/AndyNowacki/momenttensors-jl)
+[![Coverage Status](https://coveralls.io/repos/github/anowacki/MomentTensors.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/MomentTensors.jl?branch=master)
+
 ## What is MomentTensors.jl?
 A [Julia](http://julialang.org) package for dealing with [seismic moment
 tensors](https://earthquake.usgs.gov/learn/glossary/?term=moment%20tensor).
