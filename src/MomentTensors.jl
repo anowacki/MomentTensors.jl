@@ -308,15 +308,15 @@ function radiation_pattern(m::MT, azimuth, inclination)
 end
 
 """
-    rotate(m::MT, angle_r, angle_theta, angle_phi) -> ::MT
+    rotate(m::MT, angle_r, angle_θ, angle_ϕ) -> ::MT
 
 Return a rotated version of a moment tensor, rotated in turn about the axes
-r, theta and phi.  The rotation appears clockwise when looking down each axis
+r, θ and ϕ.  The rotation appears clockwise when looking down each axis
 towards the origin.
 """
 function rotate(m::MT, r, t, p)
     R = RotZ(deg2rad(p)) * RotY(deg2rad(t)) * RotX(deg2rad(r))
-    m′ = R'*Array(m)*R
+    m′ = R'*_matrix(m)*R
     MT(m′)
 end
 
@@ -408,6 +408,41 @@ function Base.show(io::IO, mime::MIME"text/plain", m::MT{T}) where T
     println(io, "MomentTensors.MT{$T}:")
     io = IOContext(io, :compact=>true)
     Base.print_array(io, Array(m))
+end
+
+"""
+    MTDecomposition{T<:Number}
+
+Struct containing the results of `decompose`.
+
+Accessible fields are:
+
+- `isotropic`: isotropic part of the moment tensor
+- `isotropic_moment`: isotropic moment
+- `isotropic_prop`: isotropic proportion of moment tensor
+- `deviatoric`: deviatoric part of the moment tensor
+- `deviatoric_moment`: deviatoric moment
+- `deviatoric_prop`: deviatoric_prop part of the moment tensor
+- `clvd`: CLVD part of the moment tensor
+- `clvd_moment`: CLVD moment
+- `clvd_prop`: CLVD proportion of moment tensor
+- `double_couple`: double couple part of the moment tensor
+- `double_couple_moment`: double couple moment
+- `double_couple_prop`: double couple proportion of moment tensor
+"""
+struct MTDecomposition{T<:Number}
+    isotropic::MT{T}
+    isotropic_moment::T
+    isotropic_prop::T
+    deviatoric::MT{T}
+    deviatoric_moment::T
+    deviatoric_prop::T
+    clvd::MT{T}
+    clvd_moment::T
+    clvd_prop::T
+    double_couple::MT{T}
+    double_couple_moment::T
+    double_couple_prop::T
 end
 
 """
