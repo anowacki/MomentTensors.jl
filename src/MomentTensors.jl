@@ -399,7 +399,8 @@ where the eigenvalues of the moment tensor are λ₁ ≥ λ₂ ≥ λ₃.
   Observation North-Holland, Amsterdam, Theory and Interpretation, pp. 345-353.
 """
 function eps_non_dc(m::MT)
-    λ = sort(eigen(Symmetric(_matrix(m))).values)
+    # eigen returns eigenvalues sorted by default
+    λ = eigen(Symmetric(_matrix(m))).values
     -λ[2]/max(abs(λ[1]), abs(λ[3]))
 end
 
@@ -446,11 +447,14 @@ struct MTDecomposition{T<:Number}
 end
 
 """
-    decompose(m::MT) -> m_iso, m_dev, m_dc, m_clvd
+    decompose(m::MT) -> iso, dev, dc, clvd, m0_iso, m0_dev, prop_iso, prop_dev, prop_dc, prop_clvd, m0
 
-Decompose the arbitrary moment tensor `m` into its isotropic, `m_iso`,
-and deviatoric parts, `m_dev`, plus the CLVD, `m_clvd`, and double-couple,
-`m_dc`, components
+Decompose the arbitrary moment tensor `m` into its isotropic, `iso`,
+and deviatoric parts, `dev`, plus the CLVD, `clvd`, and double-couple,
+`dc`, components.  The proportion of the moment tensor represented by
+the isotropic, deviatoric, double-couple and CLVD components are
+given respectively by `prop_iso`, `prop_dev`, `prop_dc` and `prop_clvd`.
+The scalar moment in Nm is given by `m0`.
 """
 function decompose(m::MT{T}) where T
     tr = m[1] + m[2] + m[3]

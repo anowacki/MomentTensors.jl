@@ -1,7 +1,7 @@
 name = "MomentTensors"
 uuid = "7bb32750-d21c-11e8-1ebc-09158bc70490"
 authors = ["Andy Nowacki <a.nowacki@leeds.ac.uk>"]
-version = "0.2.3"
+version = "0.2.4"
 
 [compat]
 julia = "0.7, 1"

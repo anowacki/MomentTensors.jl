@@ -22,5 +22,6 @@ using MomentTensors, Test
         @test d.prop_clvd ≈ 0.32 atol=0.01
         @test d.m0 ≈ 14.9031089939
         @test mw(d.m0) ≈ -5.25114874821
+        @test eps_non_dc(m) ≈ -0.34250995536253115
     end
 end
