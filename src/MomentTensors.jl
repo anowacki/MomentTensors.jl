@@ -83,7 +83,7 @@ One may access the values of a moment tensor `M` in two ways:
 1. M[i,j] yields the elements of `M.m` as if they were a two-tensor
 2. M[::Symbol] yields the elements by name; see `getindex` for details
 """
-struct MT{T<:AbstractFloat}
+struct MT{T<:Number}
     m::SVector{6,T}
     MT{T}(m) where T = new{T}(m)
 end
@@ -128,18 +128,19 @@ Base.getindex(m::MT, i, j) = m.m[_ij2k[i,j]]
 Base.getindex(m::MT, i, j, inds...) = m[inds[i],inds[j]][inds...]
 Base.size(m::MT) = (3, 3)
 Base.isapprox(m1::MT, m2::MT; kwargs...) = isapprox(m1.m, m2.m; kwargs...)
+Base.eltype(::MT{T}) where T = T
 
-Base.:+(m::MT, a::Real) = MT(m.m .+ a)
-Base.:+(a::Real, m::MT) = MT(a .+ m.m)
+Base.:+(m::MT, a::Number) = MT(m.m .+ a)
+Base.:+(a::Number, m::MT) = MT(a .+ m.m)
 Base.:+(a::MT, b::MT) = MT(a.m .+ b.m)
-Base.:-(m::MT, a::Real) = MT(m.m .- a)
-Base.:-(a::Real, m::MT) = MT(a .- m.m)
+Base.:-(m::MT, a::Number) = MT(m.m .- a)
+Base.:-(a::Number, m::MT) = MT(a .- m.m)
 Base.:-(a::MT, b::MT) = MT(a.m .- b.m)
 Base.:-(m::MT) = MT(-m.m)
-Base.:*(m::MT, a::Real) = MT(m.m.*a)
-Base.:*(a::Real, m::MT) = MT(a.*m.m)
-Base.:/(m::MT, a::Real) = MT(m.m./a)
-Base.:/(a::Real, m::MT) = MT(a./m.m)
+Base.:*(m::MT, a::Number) = MT(m.m.*a)
+Base.:*(a::Number, m::MT) = MT(a.*m.m)
+Base.:/(m::MT, a::Number) = MT(m.m./a)
+Base.:/(a::Number, m::MT) = MT(a./m.m)
 
 # Routines using or manipulating MTs
 """
