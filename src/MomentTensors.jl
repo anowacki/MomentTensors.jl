@@ -149,11 +149,11 @@ Base.:/(a::Number, m::MT) = MT(a./m.m)
 Return the P, SV and SH wave amplitudes, `P`, `SV`, `SH` respectively, and source
 polarisation, `j`, across the range of azimuth `azimuth_range`.
 """
-function amplitude_v_azimuth(m::MT, inclination, azimuth_range=0:359)
-    p = Array{Float64}(undef, length(azimuth_range))
+function amplitude_v_azimuth(m::MT{T}, inclination, azimuth_range=0:359) where T
+    p = Array{T}(undef, length(azimuth_range))
     sv = similar(p)
     sh = similar(p)
-    j = similar(p)
+    j = Array{typeof(m[1]/oneunit(m[1]))}(undef, length(azimuth_range))
     for (i, az) in enumerate(azimuth_range)
         p[i], sv[i], sh[i], j[i] = radiation_pattern(m, az, inclination)
     end
@@ -326,7 +326,7 @@ end
 
 Convert a scalar moment (Nm) to a moment magnitude
 """
-mw(M0) = 2/3*log10(M0*1e7) - 10.7
+mw(M0) = 2/3*log10(M0*1e7/oneunit(M0)) - 10.7
 
 """
     m0(mw) -> m0
@@ -399,9 +399,11 @@ where the eigenvalues of the moment tensor are λ₁ ≥ λ₂ ≥ λ₃.
   'double couple' model. In: H. Kanamori and E. Boschi (Editors), Earthquakes:
   Observation North-Holland, Amsterdam, Theory and Interpretation, pp. 345-353.
 """
-function eps_non_dc(m::MT)
+function eps_non_dc(m::MT{T}) where T
+    # Remove units if present
+    m′ = m/oneunit(T)
     # eigen returns eigenvalues sorted by default
-    λ = eigen(Symmetric(_matrix(m))).values
+    λ = eigen(Symmetric(_matrix(m′))).values
     -λ[2]/max(abs(λ[1]), abs(λ[3]))
 end
 
@@ -458,22 +460,27 @@ given respectively by `prop_iso`, `prop_dev`, `prop_dc` and `prop_clvd`.
 The scalar moment in Nm is given by `m0`.
 """
 function decompose(m::MT{T}) where T
-    tr = m[1] + m[2] + m[3]
-    m_iso = MT(tr/3, tr/3, tr/3, 0, 0, 0) # Isotropic MT
+    # Remove units if present for eigendecomposition
+    m = m/oneunit(T)
+    @inbounds tr = m[1] + m[2] + m[3]
+    _zero = zero(one(T))
+    m_iso = MT(tr/3, tr/3, tr/3, _zero, _zero, _zero) # Isotropic MT
     m0_iso = abs(tr)/3 # Moment of isotropic part
     m_dev = m - m_iso # Deviatoric MT
     evals, evecs = LinearAlgebra.eigen(Symmetric(_matrix(m_dev)))
     # Sort eigenvectors (basis vectors) by absolute eigenvalues
-    i = sortperm(evals, by=abs)
-    e1 = SVector{3}(evecs[:,i[1]])
-    e2 = SVector{3}(evecs[:,i[2]])
-    e3 = SVector{3}(evecs[:,i[3]])
+    i = _sortperm_abs_3(evals)
+    @inbounds begin
+        e1 = SVector{3}(evecs[:,i[1]])
+        e2 = SVector{3}(evecs[:,i[2]])
+        e3 = SVector{3}(evecs[:,i[3]])
+    end
     # λ₁ is smallest absolute eigenvalue, corresponding to e1
-    λ₁, λ₂, λ₃ = evals[i]
+    @inbounds λ₁, λ₂, λ₃ = evals[i]
     # Largest absolute eigenvector gives moment of deviatoric part
     m0_dev = abs(λ₃)
     # Proportion of 
-    F = m0_dev < eps(T) ? T(0.5) : -λ₁/λ₃
+    F = m0_dev < eps(T) ? T(0.5)/oneunit(T) : -λ₁/λ₃
     m_dc = MT(λ₃*(1 - 2F)*(e3.*e3' - e2.*e2'))
     m_clvd = m_dev - m_dc
     m0 = m0_iso + m0_dev
@@ -481,9 +488,33 @@ function decompose(m::MT{T}) where T
     dev_prop = m0_dev/m0
     dc_prop = (1 - 2F)*(1 - iso_prop)
     clvd_prop = 1 - iso_prop - dc_prop
-    return (iso=m_iso, dev=m_dev, dc=m_dc, clvd=m_clvd, iso_m0=m0_iso, dev_m0=m0_dev,
+    # Return units if any
+    u = oneunit(T)
+    return (iso=u*m_iso, dev=u*m_dev, dc=u*m_dc, clvd=u*m_clvd, iso_m0=u*m0_iso, dev_m0=u*m0_dev,
         prop_iso=iso_prop, prop_dev=dev_prop, prop_dc=dc_prop, prop_clvd=clvd_prop,
-        m0=m0)
+        m0=u*m0)
+end
+
+# Taken from StaticArrays.jl
+#    https://github.com/JuliaArrays/StaticArrays.jl/blob/a0179213b741c0feebd2fc6a1101a7358a90caed/src/eigen.jl#L267
+# which is distributed under the MIT "Expat" licence.
+"""
+    _sortperm_abs_3(vector) -> perm
+
+Given a length-3 `vector`, return the permutation vector which sorts the
+values in increasing absolute value.  `perm` is a length-3 `SVector`.
+
+(Note that if `vector` is longer than 3, then elements after the first
+three are ignored and `perm` simply gives the permutations of the
+first three elements.)
+"""
+@inline function _sortperm_abs_3(v)
+    abs_v = abs.(v)
+    perm = SVector(1, 2, 3)
+    (abs_v[perm[1]] > abs_v[perm[2]]) && (perm = SVector(perm[2], perm[1], perm[3]))
+    (abs_v[perm[2]] > abs_v[perm[3]]) && (perm = SVector(perm[1], perm[3], perm[2]))
+    (abs_v[perm[1]] > abs_v[perm[2]]) && (perm = SVector(perm[2], perm[1], perm[3]))
+    perm
 end
 
 end # module
