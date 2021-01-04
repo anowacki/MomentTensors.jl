@@ -92,6 +92,7 @@ MT(args...) = MT{float(promote_type(eltype.(args)...))}(args...)
 MT(m::Union{AbstractVector{T}, AbstractArray{T,2}}) where T = MT{float(T)}(m)
 MT{T}(rr, tt, pp, rt, rp, tp) where T = MT{T}(SVector{6,T}(rr, tt, pp, rt, rp, tp))
 MT{T}(strike, dip, rake, M0) where T = MT{T}(_sdr2mt(strike, dip, rake, M0))
+MT(strike, dip, rake, M0) = MT{float(typeof(M0))}(_sdr2mt(strike, dip, rake, M0))
 function MT{T}(m::AbstractArray{U,2} where U, warn=true) where T
     size(m) == (3,3) ||
         throw(ArgumentError("2-dimensional array must have dimensions `(3,3)` for a `MT`"))
@@ -259,7 +260,7 @@ downwards towards the radial direction.  Angles in degrees.
 * P, SV, SH : Amplitudes of ray in P, SV and SH directionso
 * j         : Source polarisation measured from SV towards SH (i.e., like ϕ′ in splitting)
 """
-function radiation_pattern(m::MT, azimuth, inclination)
+function radiation_pattern(m::MT{T}, azimuth, inclination) where T
     #=
     Uses formula given in pp. 70 ff. of
 
@@ -285,9 +286,10 @@ function radiation_pattern(m::MT, azimuth, inclination)
     Mxz =  m[:rt]
     Myz = -m[:rp]
 
-    # Convert to radians
-    a = deg2rad(azimuth)
-    i = deg2rad(inclination)
+    # Convert to radians in same precision as `m`, removing units
+    angle_type = typeof(one(T))
+    a = angle_type(deg2rad(azimuth))
+    i = angle_type(deg2rad(inclination))
 
     # Some shortcuts
     sini = sin(i)
@@ -315,10 +317,10 @@ Return a rotated version of a moment tensor, rotated in turn about the axes
 r, θ and ϕ.  The rotation appears clockwise when looking down each axis
 towards the origin.
 """
-function rotate(m::MT, r, t, p)
+function rotate(m::MT{T}, r, t, p) where T
     R = RotZ(deg2rad(p)) * RotY(deg2rad(t)) * RotX(deg2rad(r))
     m′ = R'*_matrix(m)*R
-    MT(m′)
+    MT{T}(m′)
 end
 
 """
@@ -450,7 +452,7 @@ struct MTDecomposition{T<:Number}
 end
 
 """
-    decompose(m::MT) -> iso, dev, dc, clvd, m0_iso, m0_dev, prop_iso, prop_dev, prop_dc, prop_clvd, m0
+    decompose(m::MT) -> iso, dev, dc, clvd, iso_m0, dev_m0, prop_iso, prop_dev, prop_dc, prop_clvd, m0
 
 Decompose the arbitrary moment tensor `m` into its isotropic, `iso`,
 and deviatoric parts, `dev`, plus the CLVD, `clvd`, and double-couple,
