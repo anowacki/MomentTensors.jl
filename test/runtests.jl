@@ -8,4 +8,5 @@ using MomentTensors, Test
     include("planes.jl")
     include("io.jl")
     include("decompose.jl")
+    include("units.jl")
 end

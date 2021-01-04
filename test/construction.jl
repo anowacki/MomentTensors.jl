@@ -4,6 +4,10 @@ using MomentTensors, Test, StaticArrays
     @testset "Direct" begin
         @test MT(1, 2, 3, 4, 5, 6) isa MT{Float64}
         @test MT{Float32}(1, 2, 3, 4, 5, 6) isa MT{Float32}
+        @testset "$T" for T in (Float32, Float64)
+            @test eltype(MT{T}(1, 2, 3, 4, 5, 6)) == T
+            @test eltype(MT{Complex{T}}(1, 2, 3, 4, 5, 6)) == Complex{T}
+        end
         @test MT(1, 2, 3, 4, 5, 6) == MT(@SVector[1, 2, 3, 4, 5, 6])
         @test MT(Int32[1, 2, 3, 4, 5, 6]) ==
             MT{float(Int32)}(@SVector[1.f0, 2.f0, 3.f0, 4.f0, 5.f0, 6.f0])

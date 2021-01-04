@@ -1,4 +1,4 @@
-using MomentTensors, Test
+using MomentTensors, Test, StaticArrays
 
 # Comparison with example at http://www.larskrieger.de/mopad/#getall
 @testset "Decomposition" begin
@@ -28,5 +28,10 @@ using MomentTensors, Test
         @test d.m0 ≈ 14.9031089939
         @test mw(d.m0) ≈ -5.25114874821
         @test eps_non_dc(m) ≈ -0.34250995536253115
+    end
+
+    @testset "_sortperm_abs_3" begin
+        @test MomentTensors._sortperm_abs_3(SVector(1.0, 2.0, 3.0)) == SVector(1, 2, 3)
+        @test MomentTensors._sortperm_abs_3(SVector(-3.0, -2.0, 1)) == SVector(3, 2, 1)
     end
 end
