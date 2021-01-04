@@ -6,6 +6,11 @@ using MomentTensors, Test
                 -5  1  4
                 10  4  2])
         d = decompose(m)
+        @testset "Has field $f" for f in (
+                :iso, :dev, :dc, :clvd, :iso_m0, :dev_m0, :prop_iso, :prop_dev,
+                :prop_dc, :prop_clvd, :m0)
+            @test hasproperty(d, f)
+        end
         @test d.iso == MT(2, 2, 2, 0, 0, 0)
         @test d.prop_iso ≈ 0.13 atol=0.01
         @test d.dev == MT([ 1 -5 10
