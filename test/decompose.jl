@@ -9,7 +9,7 @@ using MomentTensors, Test
         @testset "Has field $f" for f in (
                 :iso, :dev, :dc, :clvd, :iso_m0, :dev_m0, :prop_iso, :prop_dev,
                 :prop_dc, :prop_clvd, :m0)
-            @test hasproperty(d, f)
+            @test f in fieldnames(typeof(d))
         end
         @test d.iso == MT(2, 2, 2, 0, 0, 0)
         @test d.prop_iso ≈ 0.13 atol=0.01
