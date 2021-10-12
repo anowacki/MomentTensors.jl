@@ -1,8 +1,7 @@
 # MomentTensors.jl
 
-[![Build Status](https://travis-ci.org/anowacki/MomentTensors.jl.svg?branch=master)](https://travis-ci.org/anowacki/MomentTensors.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/bovv9topw8r60l0k?svg=true)](https://ci.appveyor.com/project/AndyNowacki/momenttensors-jl)
-[![Coverage Status](https://coveralls.io/repos/github/anowacki/MomentTensors.jl/badge.svg?branch=master)](https://coveralls.io/github/anowacki/MomentTensors.jl?branch=master)
+[![Build Status](https://github.com/anowacki/MomentTensors.jl/workflows/CI/badge.svg)](https://github.com/anowacki/MomentTensors.jl/actions)
+[![Coverage status](https://codecov.io/gh/anowacki/MomentTensors.jl/branch/master/graph/badge.svg?token=knbujQ671A)](https://codecov.io/gh/anowacki/MomentTensors.jl)
 
 ## What is MomentTensors.jl?
 A [Julia](http://julialang.org) package for dealing with [seismic moment
@@ -129,3 +128,14 @@ search: MT mtime SymTridiagonal Meta Method match Matrix mktemp methods matchall
       
     2.   M[::Symbol] yields the elements by name; see getindex(::MT) for details
 ```
+
+## Contributing
+If you find a bug with MomentTensors or have suggestions for improvement,
+please
+[open an issue](https://github.com/anowacki/MomentTensors.jl/issues/new/choose)
+giving as much information as possible on how to reproduce the bug or problem.
+
+[Pull requests](https://github.com/anowacki/MomentTensors.jl/compare)
+to add new features are welcome and will be seriously
+considered.  Please note that the package aims to be lightweight and
+rely on few external dependencies.
