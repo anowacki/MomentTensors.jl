@@ -81,7 +81,7 @@ symmetric.  This can be turned off when `warn` is `false.
 
 One may access the values of a moment tensor `M` in two ways:
 1. M[i,j] yields the elements of `M.m` as if they were a two-tensor
-2. M[::Symbol] yields the elements by name; see `getindex` for details
+2. M[::Symbol] yields the elements by name; see [`getindex`](@ref Base.getindex(::MT, ::Symbol)) for details
 """
 struct MT{T<:Number}
     m::SVector{6,T}
@@ -419,7 +419,7 @@ end
 """
     MTDecomposition{T<:Number}
 
-Struct containing the results of `decompose`.
+Struct containing the results of [`decompose`](@ref).
 
 Accessible fields are:
 
