@@ -34,7 +34,7 @@ format used by the [GlobalCMT project](https://globalcmt.org).
 MomentTensors.jl can be added to your Julia install like so:
 
 ```julia
-julia> import Pkg; Pkg.pkg"add https://github.com/anowacki/MomentTensors.jl"
+julia> import Pkg; Pkg.add("MomentTensors")
 ```
 
 
