@@ -239,7 +239,7 @@ _getlines(s::String) = split(chomp(s), '\n')
 """
     radiation_pattern(m::MT, azimuth, inclination) -> P, SV, SH, j
 
-Calculate the radiation pattern from the moment tensor `m`, along `azimuth`
+Calculate the far-field radiation pattern from the moment tensor `m`, along `azimuth`
 measured from local north towards east, and `inclination`, measured away from
 downwards towards the radial direction.  Angles in degrees.
 
